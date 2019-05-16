@@ -348,7 +348,36 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
                         String perName = entry.getKey();
                         int perResult = entry.getValue();
                         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), perName)) {
-
+                            showAlertGotoSetting("", "Need check permission", "Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    checkPermission();
+                                    dialog.dismiss();
+                                }
+                            }, "No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            },false);
+                        }else {
+                            showAlertGotoSetting("", "You have denied some permissions", "Go to setting", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    Uri uri = Uri.fromParts("package", getActivity().getPackageName(), null);
+                                    intent.setData(uri);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+                                    dialog.dismiss();
+                                }
+                            }, "No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            },false);
                         }
                     }
                 }
