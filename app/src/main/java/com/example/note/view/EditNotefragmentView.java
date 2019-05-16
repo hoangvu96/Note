@@ -25,11 +25,11 @@ public interface EditNotefragmentView {
 
     void deleteNote();
 
-    void share();
+    void share(Note note);
 
-    void left(Note note);
+    void moveLeft(Note note);
 
-    void right(Note note);
+    void moveRight(Note note);
 
     void showLeft();
 
@@ -38,4 +38,6 @@ public interface EditNotefragmentView {
     void hideLeft();
 
     void hideRight();
+
+    void addNewNote();
 }

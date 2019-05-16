@@ -5,4 +5,5 @@
     <string name="action_color">Color</string>
     <string name="action_camera">Camera</string>
     <string name="permission">Bạn chưa check phiên bản</string>
+    <string name="menu_overflow">New note</string>
 </resources>

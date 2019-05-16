@@ -20,7 +20,7 @@ public interface EditNotefragmentPresenter extends BasePresenter<EditNotefragmen
 
     void deleteNote(int id);
 
-    void share();
+    void share(int id);
 
     void left(int id);
 
@@ -29,4 +29,6 @@ public interface EditNotefragmentPresenter extends BasePresenter<EditNotefragmen
     void checkIsLast(int id);
 
     void checkIsFirt(int id);
+
+    void addNewNote();
 }

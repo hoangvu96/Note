@@ -4,7 +4,7 @@
     android:id="@+id/container"
     android:layout_width="140dp"
     android:layout_height="140dp"
-    android:padding="8dp">
+    android:padding="@dimen/margin_short">
 
     <ImageView
         android:layout_centerInParent="true"
@@ -14,8 +14,8 @@
 
     <ImageView
         android:id="@+id/imv_close"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="@dimen/image_size_normal"
+        android:layout_height="@dimen/image_size_normal"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:src="@drawable/ic_close_black_24dp" />

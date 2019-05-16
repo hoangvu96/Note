@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import com.example.note.interactor.EditNotefragmentInteractor;
 import com.example.note.model.ImagePath;
 import com.example.note.model.Note;
+import com.example.note.utils.Constant;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
     public void editNote(final Note note) {
         Realm realm = Realm.getDefaultInstance();
         realm.beginTransaction();
-        Note mNote = realm.where(Note.class).equalTo("id", note.getId()).findFirst();
+        Note mNote = realm.where(Note.class).equalTo(Constant.ID, note.getId()).findFirst();
         mNote.setColor(note.getColor());
         mNote.setTitle(note.getTitle());
         mNote.setContent(note.getContent());
@@ -47,24 +48,24 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
 
     @Override
     public String[] spinerDate() {
-        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.US);
+        SimpleDateFormat dayFormat = new SimpleDateFormat(Constant.EEEE, Locale.US);
         Calendar calendar = Calendar.getInstance();
         String weekDay = dayFormat.format(calendar.getTime());
-        String nextWeek = "Next " + weekDay;
-        String[] str = new String[]{"Today", "Tomorrow", nextWeek, "Other..."};
+        String nextWeek = Constant.NEXT + weekDay;
+        String[] str = new String[]{Constant.TODAY,Constant.TOMORROW,nextWeek,Constant.OTHER};
         return str;
     }
 
     @Override
     public String[] spinerTime() {
-        String[] str = new String[]{"09:00", "13:00", "17:00", "20:00", "Other..."};
+        String[] str = new String[]{Constant.NINE,Constant.THIRTEEN,Constant.SEVENTEEN,Constant.TWENTY,Constant.OTHER};
         return str;
     }
 
     @Override
     public Note returnNote(int id) {
         Realm realm = Realm.getDefaultInstance();
-        Note note = realm.where(Note.class).equalTo("id", id).findFirst();
+        Note note = realm.where(Note.class).equalTo(Constant.ID, id).findFirst();
         return note;
     }
 
@@ -74,7 +75,7 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
         realm.executeTransactionAsync(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
-                realm.where(Note.class).equalTo("id", id).findFirst().deleteFromRealm();
+                realm.where(Note.class).equalTo(Constant.ID, id).findFirst().deleteFromRealm();
             }
         });
     }
@@ -82,7 +83,7 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
     @Override
     public Note left(int id) {
         Realm realm = Realm.getDefaultInstance();
-        RealmResults<Note> notes = realm.where(Note.class).findAll().sort("id", Sort.ASCENDING);
+        RealmResults<Note> notes = realm.where(Note.class).findAll().sort(Constant.ID, Sort.ASCENDING);
         for (int i = 0; i < notes.size(); i++) {
             if (notes.get(i).getId() == id) {
                 if (i > 0) {
@@ -91,13 +92,13 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
             }
         }
         realm.close();
-        return realm.where(Note.class).equalTo("id", id).findFirst();
+        return realm.where(Note.class).equalTo(Constant.ID, id).findFirst();
     }
 
     @Override
     public Note right(int id) {
         Realm realm = Realm.getDefaultInstance();
-        RealmResults<Note> notes = realm.where(Note.class).findAll().sort("id", Sort.ASCENDING);
+        RealmResults<Note> notes = realm.where(Note.class).findAll().sort(Constant.ID, Sort.ASCENDING);
         for (int i = 0; i < notes.size(); i++) {
             if (notes.get(i).getId() == id && i < (notes.size() - 1)) {
                 if (i < notes.size()) {
@@ -106,13 +107,13 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
             }
         }
         realm.close();
-        return realm.where(Note.class).equalTo("id", id).findFirst();
+        return realm.where(Note.class).equalTo(Constant.ID, id).findFirst();
     }
 
     @Override
     public boolean isFirt(int id) {
         Realm realm = Realm.getDefaultInstance();
-        RealmResults<Note> notes = realm.where(Note.class).findAll().sort("id", Sort.ASCENDING);
+        RealmResults<Note> notes = realm.where(Note.class).findAll().sort(Constant.ID, Sort.ASCENDING);
         for (int i = 0; i < notes.size(); i++) {
             if (notes.get(i).getId() == id && i == 0) {
                 return true;
@@ -125,7 +126,7 @@ public final class EditNotefragmentInteractorImpl implements EditNotefragmentInt
     @Override
     public boolean isLast(int id) {
         Realm realm = Realm.getDefaultInstance();
-        RealmResults<Note> notes = realm.where(Note.class).findAll().sort("id", Sort.ASCENDING);
+        RealmResults<Note> notes = realm.where(Note.class).findAll().sort(Constant.ID, Sort.ASCENDING);
         for (int i = 0; i < notes.size(); i++) {
             if (notes.get(i).getId() == id && i == notes.size()-1) {
                 return true;

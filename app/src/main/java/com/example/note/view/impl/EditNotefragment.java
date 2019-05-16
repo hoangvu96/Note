@@ -3,8 +3,13 @@ package com.example.note.view.impl;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -21,6 +27,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,18 +37,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.example.note.AlarmReceiver;
 import com.example.note.R;
 import com.example.note.adapter.ImageAdapter;
 import com.example.note.model.ImagePath;
 import com.example.note.model.Note;
+import com.example.note.utils.Constant;
 import com.example.note.view.EditNotefragmentView;
 import com.example.note.presenter.loader.PresenterFactory;
 import com.example.note.presenter.EditNotefragmentPresenter;
@@ -51,7 +62,9 @@ import com.example.note.injection.DaggerEditNotefragmentViewComponent;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -138,11 +151,13 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
     public void onResume() {
         super.onResume();
         if (isFirt) {
-            mPresenter.initData(id);
-            mPresenter.showSpinerDate();
-            mPresenter.showSpinerTime();
-            mPresenter.checkIsFirt(id);
-            mPresenter.checkIsLast(id);
+            if (mPresenter != null) {
+                mPresenter.initData(id);
+                mPresenter.showSpinerDate();
+                mPresenter.showSpinerTime();
+                mPresenter.checkIsFirt(id);
+                mPresenter.checkIsLast(id);
+            }
             isFirt = false;
         }
     }
@@ -176,52 +191,207 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
         }
     }
 
+
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_toolbar, menu);
-        MenuItem camera = menu.findItem(R.id.action_camera);
-        camera.setVisible(true);
-        MenuItem color = menu.findItem(R.id.action_color);
-        color.setVisible(true);
-        MenuItem done = menu.findItem(R.id.action_done);
-        done.setVisible(true);
-        MenuItem setting = menu.findItem(R.id.action_settings);
-        setting.setVisible(true);
+    public void onDone() {
+        getActivity().onBackPressed();
+    }
+
+
+    @Override
+    public void initData(Note note) {
+        this.mNote = note;
+        initView(note);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                getActivity().onBackPressed();
-                return false;
-            case R.id.action_camera:
-                mPresenter.onClickCamera();
-                return false;
-            case R.id.action_color:
-                mPresenter.onClickColor();
-                return false;
-            case R.id.action_done:
-                RealmList<ImagePath> mImagePaths = new RealmList<>();
-                mImagePaths.addAll(imageAdapter.getImagePaths());
-                Note eNote = new Note();
-                eNote.setId(mNote.getId());
-                eNote.setColor(tempNote.getColor());
-                eNote.setTitle(edtTitle.getText().toString());
-                eNote.setContent(edtContent.getText().toString());
-                eNote.setDateCreate(tvDate.getText().toString());
-                eNote.setImages(mImagePaths);
-                eNote.setDate(spnDate.getSelectedItem().toString());
-                eNote.setTimeAlarm(spnTime.getSelectedItem().toString());
-                eNote.setAlarm(tempNote.isAlarm());
-                mPresenter.onClickDone(eNote);
-                return false;
-            case R.id.action_settings:
+    public void deleteNote() {
+        getActivity().onBackPressed();
+    }
 
-                return false;
+    @Override
+    public void share(Note note) {
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, note.getTitle());
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, note.getContent());
+        startActivity(Intent.createChooser(sharingIntent, "Share"));
+    }
+
+    @Override
+    public void moveLeft(Note note) {
+        this.mNote = note;
+        id = note.getId();
+        initView(note);
+        if (mPresenter != null) {
+            mPresenter.checkIsFirt(id);
         }
+    }
 
-        return super.onOptionsItemSelected(item);
+    @Override
+    public void moveRight(Note note) {
+        this.mNote = note;
+        id = note.getId();
+        initView(note);
+        if (mPresenter != null) {
+            mPresenter.checkIsLast(id);
+        }
+    }
+
+    @Override
+    public void showLeft() {
+        imvLeft.setImageResource(R.drawable.ic_back);
+    }
+
+    @Override
+    public void showRight() {
+        imvRight.setImageResource(R.drawable.ic_chevron_right_black_24dp);
+    }
+
+    @Override
+    public void hideLeft() {
+        imvLeft.setImageResource(R.drawable.ic_left_gray);
+    }
+
+    @Override
+    public void hideRight() {
+        imvRight.setImageResource(R.drawable.ic_right_gray);
+    }
+
+    @Override
+    public void addNewNote() {
+        changeFragment(getClass().getSimpleName(),new AddNotefragment());
+    }
+
+    @Override
+    public void onRemove(int pos) {
+        imageAdapter.removeItem(pos);
+    }
+
+    @Override
+    public void onClick(int pos) {
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(imageAdapter.getImagePaths().get(pos).getImagePath())));
+    }
+
+    @Override
+    public void showDialogColor() {
+        dialogColor();
+    }
+
+    @Override
+    public void showSpinerDate(final String[] strDate) {
+        strDate[strDate.length-1]= mNote.getDate();
+        adapterDate = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strDate);
+        spnDate.setAdapter(adapterDate);
+        spnDate.setSelection(strDate.length-1);
+        spnDate.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (spnDate.getSelectedItem().toString().equals(Constant.OTHER)) {
+                    showDatePicker(strDate);
+                    return;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+    }
+
+    @Override
+    public void showSpinerTime(final String[] strTime) {
+        strTime[strTime.length-1]= mNote.getTimeAlarm();
+        adapterTime = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strTime);
+        spnTime.setAdapter(adapterTime);
+        spnTime.setSelection(strTime.length-1);
+        spnTime.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (spnTime.getSelectedItem().toString().equals(Constant.OTHER)) {
+                    showTimePicker(strTime);
+                    return;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+    }
+
+    @OnClick(R.id.imv_close)
+    public void onClose() {
+        lnContainer.setVisibility(View.INVISIBLE);
+        tvAlarm.setVisibility(View.VISIBLE);
+        tempNote.setAlarm(false);
+    }
+
+    @OnClick(R.id.tv_alarm)
+    public void onContainer() {
+        tvAlarm.setVisibility(View.GONE);
+        lnContainer.setVisibility(View.VISIBLE);
+        tempNote.setAlarm(true);
+    }
+
+    @OnClick(R.id.rl_left)
+    public void onLeft() {
+        if (mPresenter != null) {
+            mPresenter.left(id);
+            mPresenter.checkIsFirt(id);
+            mPresenter.checkIsLast(id);
+        }
+    }
+
+    @OnClick(R.id.rl_share)
+    public void onShare() {
+        if (mPresenter != null) {
+            mPresenter.share(id);
+        }
+    }
+
+    @OnClick(R.id.rl_delete)
+    public void onDelete() {
+        if (mPresenter != null) {
+            mPresenter.deleteNote(id);
+        }
+    }
+
+    @OnClick(R.id.rl_right)
+    public void onRight() {
+        if (mPresenter != null) {
+            mPresenter.right(id);
+            mPresenter.checkIsLast(id);
+            mPresenter.checkIsFirt(id);
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.imv_white:
+                tempNote.setColor(Color.parseColor("#FFFFFF"));
+                bgr.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                dialog.dismiss();
+                break;
+            case R.id.imv_blue:
+                tempNote.setColor(Color.parseColor("#2196F3"));
+                bgr.setBackgroundColor(Color.parseColor("#2196F3"));
+                dialog.dismiss();
+                break;
+            case R.id.imv_accent:
+                tempNote.setColor(Color.parseColor("#D81B60"));
+                bgr.setBackgroundColor(Color.parseColor("#D81B60"));
+                dialog.dismiss();
+                break;
+            case R.id.imv_primary:
+                tempNote.setColor(Color.parseColor("#008577"));
+                bgr.setBackgroundColor(Color.parseColor("#008577"));
+                dialog.dismiss();
+                break;
+        }
     }
 
     public void askForPermission() {
@@ -259,19 +429,17 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
     }
 
     public void uploadPhoto() {
-        final CharSequence[] options = {"Chụp ảnh", "Bộ Sưu Tập"};
+        final CharSequence[] options = {Constant.CAMERA, Constant.GALLERY};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Chọn ảnh của bạn");
-
         builder.setItems(options, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int item) {
-                if (options[item].equals("Chụp ảnh")) {
+                if (options[item].equals(Constant.CAMERA)) {
                     dispatchTakePictureIntent();
                     galleryAddPic();
-                } else if (options[item].equals("Bộ Sưu Tập")) {
+                } else if (options[item].equals( Constant.GALLERY)) {
                     Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
                     photoPickerIntent.setType("image/*");
                     startActivityForResult(photoPickerIntent, 1);
@@ -299,7 +467,7 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
 
             }
             if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(getContext(), "com.example.note.fileprovider", photoFile);
+                Uri photoURI = FileProvider.getUriForFile(getContext(), Constant.PROVIDER, photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, 0);
             }
@@ -321,7 +489,7 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
     }
 
     private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        String timeStamp = new SimpleDateFormat(Constant.DD_MM_YYYY).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_" + ".jpg";
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         File myDir = new File(storageDir.toString() + "/notes");
@@ -376,172 +544,142 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
         rcv.setAdapter(imageAdapter);
     }
 
-    @OnClick(R.id.imv_close)
-    public void onClose() {
-        lnContainer.setVisibility(View.INVISIBLE);
-        tvAlarm.setVisibility(View.VISIBLE);
-        tempNote.setAlarm(false);
-    }
 
-    @OnClick(R.id.tv_alarm)
-    public void onContainer() {
-        tvAlarm.setVisibility(View.GONE);
-        lnContainer.setVisibility(View.VISIBLE);
-        tempNote.setAlarm(true);
-    }
-
-    @OnClick(R.id.rl_left)
-    public void onLeft() {
-        mPresenter.left(id);
-        mPresenter.checkIsFirt(id);
-        mPresenter.checkIsLast(id);
-    }
-
-    @OnClick(R.id.rl_share)
-    public void onShare() {
-        mPresenter.share();
-    }
-
-    @OnClick(R.id.rl_delete)
-    public void onDelete() {
-        mPresenter.deleteNote(id);
-    }
-
-    @OnClick(R.id.rl_right)
-    public void onRight() {
-        mPresenter.right(id);
-        mPresenter.checkIsLast(id);
-        mPresenter.checkIsFirt(id);
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.imv_white:
-                tempNote.setColor(Color.parseColor("#FFFFFF"));
-                bgr.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                dialog.dismiss();
-                break;
-            case R.id.imv_blue:
-                tempNote.setColor(Color.parseColor("#2196F3"));
-                bgr.setBackgroundColor(Color.parseColor("#2196F3"));
-                dialog.dismiss();
-                break;
-            case R.id.imv_accent:
-                tempNote.setColor(Color.parseColor("#D81B60"));
-                bgr.setBackgroundColor(Color.parseColor("#D81B60"));
-                dialog.dismiss();
-                break;
-            case R.id.imv_primary:
-                tempNote.setColor(Color.parseColor("#008577"));
-                bgr.setBackgroundColor(Color.parseColor("#008577"));
-                dialog.dismiss();
-                break;
+    public void showTimePicker(final String[] strTime) {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(),AlertDialog.THEME_DEVICE_DEFAULT_DARK
+                , new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                strTime[strTime.length - 1] = hourOfDay + ":" + minute;
+                adapterTime = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strTime);
+                spnTime.setAdapter(adapterTime);
+                spnTime.setSelection(strTime.length - 1);
+                mNote.setTimeAlarm(spnTime.getSelectedItem().toString());
+            }
         }
+                , Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                , Calendar.getInstance().get(Calendar.MINUTE), true);
+        timePickerDialog.setTitle("Choose Time");
+        timePickerDialog.show();
     }
 
-    @Override
-    public void showDialogColor() {
-        dialogColor();
-    }
-
-    @Override
-    public void showSpinerDate(String[] strDate) {
-        adapterDate = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strDate);
-        spnDate.setAdapter(adapterDate);
-        spnDate.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    public void showDatePicker(final String[] strDate) {
+        Calendar c = Calendar.getInstance();
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                strDate[strDate.length - 1] = dayOfMonth + "/" + month + "/" + year;
+                adapterDate = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strDate);
+                spnDate.setAdapter(adapterDate);
+                spnDate.setSelection(strDate.length - 1);
+                mNote.setDate(spnDate.getSelectedItem().toString());
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
+        }, year, month, day);
+        datePickerDialog.setTitle("Choose Date");
+        datePickerDialog.show();
     }
 
     @Override
-    public void showSpinerTime(String[] strTime) {
-        adapterTime = new ArrayAdapter(getContext(), android.R.layout.simple_spinner_item, strTime);
-        spnTime.setAdapter(adapterTime);
-        spnTime.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_toolbar, menu);
+        MenuItem camera = menu.findItem(R.id.action_camera);
+        camera.setVisible(true);
+        MenuItem color = menu.findItem(R.id.action_color);
+        color.setVisible(true);
+        MenuItem done = menu.findItem(R.id.action_done);
+        done.setVisible(true);
+        MenuItem setting = menu.findItem(R.id.action_settings);
+        setting.setVisible(true);
     }
 
     @Override
-    public void onDone() {
-        getActivity().onBackPressed();
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                getActivity().onBackPressed();
+                return false;
+            case R.id.action_camera:
+                if (mPresenter != null) {
+                    mPresenter.onClickCamera();
+                }
+                return false;
+            case R.id.action_color:
+                if (mPresenter != null) {
+                    mPresenter.onClickColor();
+                }
+                return false;
+            case R.id.action_done:
+                RealmList<ImagePath> mImagePaths = new RealmList<>();
+                mImagePaths.addAll(imageAdapter.getImagePaths());
+                Note eNote = new Note();
+                eNote.setId(mNote.getId());
+                eNote.setColor(tempNote.getColor());
+                eNote.setTitle(edtTitle.getText().toString());
+                eNote.setContent(edtContent.getText().toString());
+                eNote.setDateCreate(tvDate.getText().toString());
+                eNote.setImages(mImagePaths);
+                eNote.setDate(spnDate.getSelectedItem().toString());
+                eNote.setTimeAlarm(spnTime.getSelectedItem().toString());
+                eNote.setAlarm(tempNote.isAlarm());
+                if (eNote.getDate().equals(Constant.TODAY)){
+                    eNote.setDate(new SimpleDateFormat(Constant.DD_MM_YYYY).format(new Date()));
+                }else if (eNote.getDate().equals(Constant.TOMORROW)){
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(new Date());
+                    calendar.add(Calendar.DATE,1);
+                    eNote.setDate(new SimpleDateFormat(Constant.DD_MM_YYYY).format(calendar.getTime()));
+                }else if (eNote.getDate().contains(Constant.NEXT)){
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(new Date());
+                    calendar.add(Calendar.DATE,7);
+                    eNote.setDate(new SimpleDateFormat(Constant.DD_MM_YYYY).format(calendar.getTime()));
+                }
+                String mDate = eNote.getDate() + " " + eNote.getTimeAlarm();
+                if (eNote.isAlarm()) {
+                    alramService(mDate, eNote.getTitle());
+                }
+                if (mPresenter != null) {
+                    mPresenter.onClickDone(eNote);
+                }
+                return false;
+            case R.id.action_settings:
+                View vItem = getActivity().findViewById(R.id.action_settings);
+                PopupMenu popMenu = new PopupMenu(getActivity(), vItem);
+                popMenu.inflate(R.menu.menu_add);
+                popMenu.show();
+                popMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        mPresenter.addNewNote();
+                        return true;
+                    }
+                });
+
+                return false;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
-
-    @Override
-    public void initData(Note note) {
-        this.mNote = note;
-        initView(note);
-    }
-
-    @Override
-    public void deleteNote() {
-        getActivity().onBackPressed();
-    }
-
-    @Override
-    public void share() {
-
-    }
-
-    @Override
-    public void left(Note note) {
-        this.mNote = note;
-        id = note.getId();
-        initView(note);
-        mPresenter.checkIsFirt(id);
-    }
-
-    @Override
-    public void right(Note note) {
-        this.mNote = note;
-        id = note.getId();
-        initView(note);
-        mPresenter.checkIsLast(id);
-    }
-
-    @Override
-    public void showLeft() {
-        imvLeft.setImageResource(R.drawable.ic_back);
-    }
-
-    @Override
-    public void showRight() {
-        imvRight.setImageResource(R.drawable.ic_chevron_right_black_24dp);
-    }
-
-    @Override
-    public void hideLeft() {
-        imvLeft.setImageResource(R.drawable.ic_left_gray);
-    }
-
-    @Override
-    public void hideRight() {
-        imvRight.setImageResource(R.drawable.ic_right_gray);
-    }
-
-    @Override
-    public void onRemove(int pos) {
-        imageAdapter.removeItem(pos);
-    }
-
-    @Override
-    public void onClick(int pos) {
-
+    public void alramService(String date, String title) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Constant.DD_MM_YYYY_HH_MM);
+        try {
+            Date mDate = simpleDateFormat.parse(date);
+            Date nDate = new Date();
+            long time = mDate.getTime() - nDate.getTime();
+            AlarmManager alarmMgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(getContext(), AlarmReceiver.class);
+            intent.putExtra(Constant.TITLE, title);
+            PendingIntent alarmIntent = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    SystemClock.elapsedRealtime() +
+                            time, alarmIntent);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 }

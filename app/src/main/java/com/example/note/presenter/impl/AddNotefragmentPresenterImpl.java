@@ -30,6 +30,11 @@ public final class AddNotefragmentPresenterImpl extends BasePresenterImpl<AddNot
     @Override
     public void onStart(boolean viewCreated) {
         super.onStart(viewCreated);
+        if (viewCreated){
+            showImage();
+            showSpinerDate();
+            showSpinerTime();
+        }
 
         // Your code here. Your view is available using mView and will not be null until next onStop()
     }

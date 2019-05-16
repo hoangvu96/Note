@@ -113,9 +113,10 @@ public final class EditNotefragmentPresenterImpl extends BasePresenterImpl<EditN
     }
 
     @Override
-    public void share() {
+    public void share(int id) {
+        Note note = mInteractor.returnNote(id);
         if (mView!=null){
-            mView.share();
+            mView.share(note);
         }
     }
 
@@ -123,7 +124,7 @@ public final class EditNotefragmentPresenterImpl extends BasePresenterImpl<EditN
     public void left(int id) {
        Note note =  mInteractor.left(id);
         if (mView!=null){
-            mView.left(note);
+            mView.moveLeft(note);
         }
     }
 
@@ -131,7 +132,7 @@ public final class EditNotefragmentPresenterImpl extends BasePresenterImpl<EditN
     public void right(int id) {
         Note note =  mInteractor.right(id);
         if (mView!=null){
-            mView.right(note);
+            mView.moveRight(note);
         }
     }
 
@@ -156,6 +157,13 @@ public final class EditNotefragmentPresenterImpl extends BasePresenterImpl<EditN
             }else {
                 mView.showLeft();
             }
+        }
+    }
+
+    @Override
+    public void addNewNote() {
+        if (mView!=null){
+           mView.addNewNote();
         }
     }
 }

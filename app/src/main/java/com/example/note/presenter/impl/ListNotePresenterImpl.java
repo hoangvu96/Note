@@ -30,10 +30,7 @@ public final class ListNotePresenterImpl extends BasePresenterImpl<ListNoteView>
         super.onStart(viewCreated);
 
         // Your code here. Your view is available using mView and will not be null until next onStop()
-
-        if (viewCreated) {
-            getNotes();
-        }
+        getNotes();
     }
 
     @Override

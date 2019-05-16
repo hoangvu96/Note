@@ -34,14 +34,8 @@ public final class MainActivity extends BaseActivity<MainPresenter, MainView> im
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        toolbar.setTitleTextColor(Color.parseColor("#FFFFFF"));
-        getSupportActionBar().setIcon(R.drawable.ic_app);
+        setUpToolbar();
         initFrg(new ListNoteFragment());
-        // Your code here
-        // Do not call mPresenter from here, it will be null! Wait for onStart or onPostCreate.
     }
 
     @Override
@@ -51,6 +45,13 @@ public final class MainActivity extends BaseActivity<MainPresenter, MainView> im
                 .mainViewModule(new MainViewModule())
                 .build()
                 .inject(this);
+    }
+
+    public void setUpToolbar(){
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        toolbar.setTitleTextColor(Color.parseColor("#FFFFFF"));
     }
 
     @NonNull
@@ -72,9 +73,5 @@ public final class MainActivity extends BaseActivity<MainPresenter, MainView> im
         } else {
             finish();
         }
-    }
-
-    public Toolbar getToolbar() {
-        return toolbar;
     }
 }

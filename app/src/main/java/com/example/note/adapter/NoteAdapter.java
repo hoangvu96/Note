@@ -48,7 +48,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return noteList.size();
+        return noteList != null ? noteList.size() : 0;
     }
 
     public void removeItem(int pos) {
@@ -75,7 +75,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
                 @Override
                 public void onClick(View v) {
                     if (onNoteAdapter != null) {
-                        onNoteAdapter.onClickNote(getLayoutPosition());
+                        onNoteAdapter.onClickNote(getAdapterPosition());
                     }
                 }
             });

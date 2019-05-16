@@ -19,45 +19,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
-            android:layout_margin="16dp"
-            android:text="13/05/19"
+            android:layout_margin="@dimen/margin_normal"
             android:textColor="@color/dark_gray" />
 
         <EditText
             android:id="@+id/edt_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_margin="@dimen/margin_normal"
             android:hint="Title"
             android:textColor="@color/black"
-            android:textSize="24sp" />
+            android:textSize="@dimen/text_large" />
 
         <EditText
             android:id="@+id/edt_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_margin="@dimen/margin_normal"
             android:hint="note"
-            android:textSize="20sp" />
+            android:textSize="@dimen/text_normal" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="@dimen/height_normal"
             android:orientation="horizontal"
-            android:paddingLeft="16dp">
+            android:paddingLeft="@dimen/margin_normal">
 
             <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="@dimen/image_size_normal"
+                android:layout_height="@dimen/image_size_normal"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_alarm_black_24dp" />
 
             <TextView
+                android:textSize="@dimen/text_normal"
                 android:id="@+id/tv_alarm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="@dimen/margin_short"
                 android:text="Alarm"
                 android:textColor="@color/dark_gray" />
 
@@ -70,20 +70,20 @@
 
                 <Spinner
                     android:id="@+id/spn_date"
-                    android:layout_width="92dp"
+                    android:layout_width="150dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"></Spinner>
 
                 <Spinner
                     android:id="@+id/spn_time"
-                    android:layout_width="92dp"
+                    android:layout_width="120dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"></Spinner>
 
                 <ImageView
                     android:id="@+id/imv_close"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="@dimen/image_size_normal"
+                    android:layout_height="@dimen/image_size_normal"
                     android:layout_gravity="center_vertical"
                     android:src="@drawable/ic_close_black_24dp" />
             </LinearLayout>
@@ -92,7 +92,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:padding="8dp"
+        android:padding="@dimen/margin_short"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:layout_alignParentBottom="true"
@@ -107,8 +107,8 @@
             <ImageView
                 android:id="@+id/imv_left"
                 android:layout_centerInParent="true"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="@dimen/image_size_large"
+                android:layout_height="@dimen/image_size_large"
                 android:src="@drawable/ic_back"/>
         </RelativeLayout>
 
@@ -124,8 +124,8 @@
             android:layout_weight="1">
             <ImageView
                 android:layout_centerInParent="true"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="@dimen/image_size_normal"
+                android:layout_height="@dimen/image_size_normal"
                 android:src="@drawable/ic_share"/>
         </RelativeLayout>
 
@@ -141,8 +141,8 @@
             android:layout_weight="1">
             <ImageView
                 android:layout_centerInParent="true"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="@dimen/image_size_normal"
+                android:layout_height="@dimen/image_size_normal"
                 android:src="@drawable/ic_delete"/>
         </RelativeLayout>
 
@@ -159,8 +159,8 @@
             <ImageView
                 android:id="@+id/imv_right"
                 android:layout_centerInParent="true"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="@dimen/image_size_large"
+                android:layout_height="@dimen/image_size_large"
                 android:src="@drawable/ic_chevron_right_black_24dp"/>
         </RelativeLayout>
     </LinearLayout>

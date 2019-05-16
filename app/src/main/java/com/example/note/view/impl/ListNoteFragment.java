@@ -58,8 +58,6 @@ public final class ListNoteFragment extends BaseFragment<ListNotePresenter, List
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
-        // Your code here
-        // Do not call mPresenter from here, it will be null! Wait for onStart
     }
 
     @Override
@@ -71,7 +69,7 @@ public final class ListNoteFragment extends BaseFragment<ListNotePresenter, List
     public void onResume() {
         super.onResume();
         if (getActivity() instanceof MainActivity) {
-            ((MainActivity) getActivity()).getSupportActionBar().setTitle("Note");
+            ((MainActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
         }
     }
 
@@ -92,11 +90,21 @@ public final class ListNoteFragment extends BaseFragment<ListNotePresenter, List
 
     @Override
     public void onShow(List<Note> noteList) {
-        rcv = getView().findViewById(R.id.rcv);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 2);
         rcv.setLayoutManager(gridLayoutManager);
         noteAdapter = new NoteAdapter(noteList, getContext(), this);
         rcv.setAdapter(noteAdapter);
+    }
+
+    @Override
+    public void onClickNote(int pos) {
+        int id = noteAdapter.getNoteList().get(pos).getId();
+        changeFragment(getClass().getSimpleName(), new EditNotefragment(id));
+    }
+
+    @Override
+    public void showAddNoteScreen() {
+        changeFragment(getClass().getSimpleName(),new AddNotefragment());
     }
 
     @Override
@@ -120,17 +128,5 @@ public final class ListNoteFragment extends BaseFragment<ListNotePresenter, List
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-
-    @Override
-    public void onClickNote(int pos) {
-        int id = noteAdapter.getNoteList().get(pos).getId();
-        changeFragment("editnote", new EditNotefragment(id));
-    }
-
-    @Override
-    public void showAddNoteScreen() {
-        changeFragment("addnote",new AddNotefragment());
     }
 }
