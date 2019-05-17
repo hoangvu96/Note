@@ -67,6 +67,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -459,19 +460,36 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
+            // Create the File where the photo should go
             File photoFile = null;
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
 
             }
+            // Continue only if the File was successfully created
             if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(getContext(), Constant.PROVIDER, photoFile);
+                Uri photoURI = FileProvider.getUriForFile(getContext(), "com.example.note.fileprovider", photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, 0);
             }
         }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        Random random = new Random();
+        int i = random.nextInt(1000);
+        String imageFileName = "JPEG_" + timeStamp + "_" + i + "_" + ".jpg";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File myDir = new File(storageDir.toString() + "/MyNotes");
+        myDir.mkdirs();
+        File image = new File(myDir, imageFileName);
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 
     public void dialogColor() {
@@ -486,17 +504,6 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
         imvAccent.setOnClickListener(this);
         imvPrimary.setOnClickListener(this);
         dialog.show();
-    }
-
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat(Constant.DD_MM_YYYY).format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_" + ".jpg";
-        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File myDir = new File(storageDir.toString() + "/notes");
-        myDir.mkdirs();
-        File image = new File(myDir, imageFileName);
-        currentPhotoPath = image.getAbsolutePath();
-        return image;
     }
 
     @Override

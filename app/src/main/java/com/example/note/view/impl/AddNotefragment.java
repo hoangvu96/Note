@@ -73,6 +73,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -109,6 +110,7 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
     private ArrayAdapter<String> adapterDate;
     private ArrayAdapter<String> adapterTime;
     private Note note = new Note();
+
 
     @Inject
     PresenterFactory<AddNotefragmentPresenter> mPresenterFactory;
@@ -295,28 +297,13 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
         return super.onOptionsItemSelected(item);
     }
 
-    public boolean checkPermission() {
-        List<String> listPermissionNeed = new ArrayList<>();
-        for (String perm : listPermissionNeed) {
-            if (ContextCompat.checkSelfPermission(getContext(), perm) != PackageManager.PERMISSION_GRANTED) {
-                listPermissionNeed.add(perm);
-            }
-        }
-
-        if (!listPermissionNeed.isEmpty()) {
-            ActivityCompat.requestPermissions(getActivity(), listPermissionNeed.toArray(new String[listPermissionNeed.size()]), MY_PERMISSIONS_REQUEST_ACCOUNTS);
-            return false;
-        }
-        return true;
-    }
-
     public void askForPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-                    || ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                    || ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (getActivity().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                    || getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                    || getActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(getActivity(), new String[]{
+                requestPermissions(new String[]{
                         Manifest.permission.CAMERA,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_EXTERNAL_STORAGE
@@ -328,6 +315,26 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
             uploadPhoto();
         }
     }
+
+//    public boolean checkPermission() {
+//        String[] appPermissions = {Manifest.permission.CAMERA
+//                , Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                , Manifest.permission.READ_EXTERNAL_STORAGE};
+//        List<String> listPermissionNeed = new ArrayList<>();
+//        for (String perm : appPermissions) {
+//            if (getActivity().checkSelfPermission(getContext(), perm) != PackageManager.PERMISSION_GRANTED) {
+//                listPermissionNeed.add(perm);
+//            }
+//        }
+//
+//        if (!listPermissionNeed.isEmpty()) {
+//            requestPermissions(getActivity(), listPermissionNeed.toArray(new String[listPermissionNeed.size()])
+//                    , MY_PERMISSIONS_REQUEST_ACCOUNTS);
+//            return false;
+//        }
+//        return true;
+//    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
@@ -348,10 +355,10 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
                         String perName = entry.getKey();
                         int perResult = entry.getValue();
                         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), perName)) {
-                            showAlertGotoSetting("", "Need check permission", "Yes", new DialogInterface.OnClickListener() {
+                            showAlertGotoSetting("Permission", "Need check permission", "Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    checkPermission();
+                                    askForPermission();
                                     dialog.dismiss();
                                 }
                             }, "No", new DialogInterface.OnClickListener() {
@@ -359,9 +366,10 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
-                            },false);
-                        }else {
-                            showAlertGotoSetting("", "You have denied some permissions", "Go to setting", new DialogInterface.OnClickListener() {
+                            }, false);
+                            break;
+                        } else {
+                            showAlertGotoSetting("Permission", "You have denied some permissions", "Go to setting", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     Intent intent = new Intent();
@@ -377,7 +385,8 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
-                            },false);
+                            }, false);
+                            break;
                         }
                     }
                 }
@@ -432,20 +441,38 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getContext().getPackageManager()) != null) {
+            // Create the File where the photo should go
             File photoFile = null;
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
 
             }
+            // Continue only if the File was successfully created
             if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(getContext(), Constant.PROVIDER, photoFile);
+                Uri photoURI = FileProvider.getUriForFile(getContext(), "com.example.note.fileprovider", photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, 0);
             }
         }
     }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        Random random = new Random();
+        int i = random.nextInt(1000);
+        String imageFileName = "JPEG_" + timeStamp + "_" + i + "_" + ".jpg";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File myDir = new File(storageDir.toString() + "/MyNotes");
+        myDir.mkdirs();
+        File image = new File(myDir, imageFileName);
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
 
     public void dialogColor() {
         dialog = new Dialog(getContext());
@@ -461,16 +488,6 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
         dialog.show();
     }
 
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat(Constant.DD_MM_YYYY).format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_" + ".jpg";
-        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File myDir = new File(storageDir.toString() + "/notes");
-        myDir.mkdirs();
-        File image = new File(myDir, imageFileName);
-        currentPhotoPath = image.getAbsolutePath();
-        return image;
-    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -558,7 +575,7 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
             AlarmManager alarmMgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(getContext(), AlarmReceiver.class);
             intent.putExtra(Constant.TITLE, title);
-            PendingIntent alarmIntent = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent alarmIntent = PendingIntent.getBroadcast(getContext(), 1001, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     SystemClock.elapsedRealtime() +
                             time, alarmIntent);
