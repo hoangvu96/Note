@@ -26,7 +26,7 @@ public class Constant {
     public static final String GALLERY = "From galerry";
 
     // BUNDLE
-    public static final String TITLE = "Title";
+    public static final String TITLE = "title";
 
     public static final String ID = "id";
 }

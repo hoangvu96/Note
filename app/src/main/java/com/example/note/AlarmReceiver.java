@@ -10,9 +10,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.example.note.utils.Constant;
 import com.example.note.view.impl.MainActivity;
 
 public class AlarmReceiver extends BroadcastReceiver {
+
     @Override
     public void onReceive(Context context, Intent intent) {
         showNotification(context, intent);
@@ -21,7 +23,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     public void showNotification(Context context, Intent intent) {
         String title = "";
         if (intent.getExtras()!=null){
-            title = intent.getExtras().getString("title");
+            title = intent.getExtras().getString(Constant.TITLE);
         }
         Bitmap largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_app);
         int notifyID = 1;

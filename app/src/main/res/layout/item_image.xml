@@ -2,9 +2,10 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/tools"
     android:id="@+id/container"
-    android:layout_width="140dp"
-    android:layout_height="140dp"
-    android:padding="@dimen/margin_short">
+    android:layout_width="128dp"
+    android:layout_height="128dp"
+    android:padding="@dimen/margin_normal"
+    android:layout_margin="4dp">
 
     <ImageView
         android:layout_centerInParent="true"

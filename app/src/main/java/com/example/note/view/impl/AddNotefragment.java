@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -239,7 +240,11 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
 
     @Override
     public void onClick(int pos) {
-        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(imageAdapter.getImagePaths().get(pos).getImagePath())));
+        Uri uri = Uri.parse(imageAdapter.getImagePaths().get(pos).getImagePath());
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "image/*");
+        startActivity(intent);
     }
 
     @Override
@@ -272,7 +277,6 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
                 note.setContent(edtContent.getText().toString());
                 note.setDateCreate(tvDate.getText().toString());
                 note.setImages(mImagePaths);
-                note.setAlarm(true);
                 mPresenter.onClickDone(note);
                 if (note.getDate().equals(Constant.TODAY)) {
                     note.setDate(new SimpleDateFormat(Constant.DD_MM_YYYY).format(new Date()));
@@ -315,26 +319,6 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
             uploadPhoto();
         }
     }
-
-//    public boolean checkPermission() {
-//        String[] appPermissions = {Manifest.permission.CAMERA
-//                , Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                , Manifest.permission.READ_EXTERNAL_STORAGE};
-//        List<String> listPermissionNeed = new ArrayList<>();
-//        for (String perm : appPermissions) {
-//            if (getActivity().checkSelfPermission(getContext(), perm) != PackageManager.PERMISSION_GRANTED) {
-//                listPermissionNeed.add(perm);
-//            }
-//        }
-//
-//        if (!listPermissionNeed.isEmpty()) {
-//            requestPermissions(getActivity(), listPermissionNeed.toArray(new String[listPermissionNeed.size()])
-//                    , MY_PERMISSIONS_REQUEST_ACCOUNTS);
-//            return false;
-//        }
-//        return true;
-//    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
@@ -466,9 +450,16 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
         int i = random.nextInt(1000);
         String imageFileName = "JPEG_" + timeStamp + "_" + i + "_" + ".jpg";
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File myDir = new File(storageDir.toString() + "/MyNotes");
+        File myDir = new File(storageDir.toString() + "/vuhtnotes");
         myDir.mkdirs();
         File image = new File(myDir, imageFileName);
+        MediaScannerConnection.scanFile(getContext(), new String[]{image.toString()}, null,
+                new MediaScannerConnection.OnScanCompletedListener() {
+                    public void onScanCompleted(String path, Uri uri) {
+                        Log.i("ExternalStorage", "Scanned " + path + ":");
+                        Log.i("ExternalStorage", "-> uri=" + uri);
+                    }
+                });
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -496,7 +487,7 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
             switch (requestCode) {
                 case 0:
                     File file = new File(currentPhotoPath);
-                    Uri uriCamera = Uri.fromFile(file);
+                    Uri uriCamera = FileProvider.getUriForFile(getContext(), "com.example.note.fileprovider", file);
                     String uriStrCamera = uriCamera.toString();
                     ImagePath imageCamera = new ImagePath();
                     imageCamera.setImagePath(uriStrCamera);
@@ -572,13 +563,15 @@ public final class AddNotefragment extends BaseFragment<AddNotefragmentPresenter
             Date mDate = simpleDateFormat.parse(date);
             Date nDate = new Date();
             long time = mDate.getTime() - nDate.getTime();
-            AlarmManager alarmMgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(getContext(), AlarmReceiver.class);
-            intent.putExtra(Constant.TITLE, title);
-            PendingIntent alarmIntent = PendingIntent.getBroadcast(getContext(), 1001, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    SystemClock.elapsedRealtime() +
-                            time, alarmIntent);
+            if (time > 0) {
+                AlarmManager alarmMgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+                Intent intent = new Intent(getContext(), AlarmReceiver.class);
+                intent.putExtra(Constant.TITLE, title);
+                PendingIntent alarmIntent = PendingIntent.getBroadcast(getContext(), 1001, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        SystemClock.elapsedRealtime() +
+                                time, alarmIntent);
+            }
         } catch (ParseException e) {
             e.printStackTrace();
         }

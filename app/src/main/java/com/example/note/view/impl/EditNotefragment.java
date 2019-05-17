@@ -14,6 +14,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -271,7 +273,11 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
 
     @Override
     public void onClick(int pos) {
-        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(imageAdapter.getImagePaths().get(pos).getImagePath())));
+        Uri uri = Uri.parse(imageAdapter.getImagePaths().get(pos).getImagePath());
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "image/*");
+        startActivity(intent);
     }
 
     @Override
@@ -485,9 +491,16 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
         int i = random.nextInt(1000);
         String imageFileName = "JPEG_" + timeStamp + "_" + i + "_" + ".jpg";
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File myDir = new File(storageDir.toString() + "/MyNotes");
+        File myDir = new File(storageDir.toString() + "/vuhtnotes");
         myDir.mkdirs();
         File image = new File(myDir, imageFileName);
+        MediaScannerConnection.scanFile(getContext(), new String[]{image.toString()}, null,
+                new MediaScannerConnection.OnScanCompletedListener() {
+                    public void onScanCompleted(String path, Uri uri) {
+                        Log.i("ExternalStorage", "Scanned " + path + ":");
+                        Log.i("ExternalStorage", "-> uri=" + uri);
+                    }
+                });
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -513,7 +526,7 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
             switch (requestCode) {
                 case 0:
                     File file = new File(currentPhotoPath);
-                    Uri uriCamera = Uri.fromFile(file);
+                    Uri uriCamera = FileProvider.getUriForFile(getContext(), "com.example.note.fileprovider", file);
                     String uriStrCamera = uriCamera.toString();
                     ImagePath imageCamera = new ImagePath();
                     imageCamera.setImagePath(uriStrCamera);
