@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -68,7 +69,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.inject.Inject;
@@ -403,11 +406,12 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
 
     public void askForPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-                    || ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                    || ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(getActivity(), new String[]{
-                         Manifest.permission.CAMERA,
+            if (getActivity().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                    || getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                    || getActivity().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(new String[]{
+                        Manifest.permission.CAMERA,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_EXTERNAL_STORAGE
                 }, MY_PERMISSIONS_REQUEST_ACCOUNTS);
@@ -423,16 +427,74 @@ public final class EditNotefragment extends BaseFragment<EditNotefragmentPresent
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_ACCOUNTS:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                HashMap<String, Integer> permissionResults = new HashMap<>();
+                int deniedCount = 0;
+                for (int i = 0; i < grantResults.length; i++) {
+                    if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                        permissionResults.put(permissions[i], grantResults[i]);
+                        deniedCount++;
+                    }
+                }
+                if (deniedCount == 0) {
                     uploadPhoto();
                 } else {
-                    Toast.makeText(getContext(), R.string.permission, Toast.LENGTH_SHORT).show();
-                    System.exit(0);
+                    for (Map.Entry<String, Integer> entry : permissionResults.entrySet()) {
+                        String perName = entry.getKey();
+                        int perResult = entry.getValue();
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), perName)) {
+                            showAlertGotoSetting("Permission", "Need check permission", "Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    askForPermission();
+                                    dialog.dismiss();
+                                }
+                            }, "No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            }, false);
+                            break;
+                        } else {
+                            showAlertGotoSetting("Permission", "You have denied some permissions", "Go to setting", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    Uri uri = Uri.fromParts("package", getActivity().getPackageName(), null);
+                                    intent.setData(uri);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+                                    dialog.dismiss();
+                                }
+                            }, "No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            }, false);
+                            break;
+                        }
+                    }
                 }
-                break;
             default:
                 break;
         }
+    }
+
+    public AlertDialog showAlertGotoSetting(String title, String msg
+            , String postilabel, DialogInterface.OnClickListener postiOnClick
+            , String negative, DialogInterface.OnClickListener negativeOnClick
+            , boolean isCanable) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(title);
+        builder.setCancelable(isCanable);
+        builder.setMessage(msg);
+        builder.setPositiveButton(postilabel, postiOnClick);
+        builder.setNegativeButton(negative, negativeOnClick);
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        return alertDialog;
     }
 
     public void uploadPhoto() {

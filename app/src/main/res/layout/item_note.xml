@@ -14,10 +14,10 @@
         android:layout_centerInParent="true"
         android:background="@color/white"
         card_view:cardCornerRadius="@dimen/radius_small"
-        card_view:cardElevation="8dp"
-        android:padding="@dimen/margin_short">
+        card_view:cardElevation="8dp">
 
         <RelativeLayout
+            android:padding="@dimen/margin_short"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
